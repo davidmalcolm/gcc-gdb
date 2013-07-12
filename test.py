@@ -45,7 +45,7 @@ class TreePrinter:
 
     def __init__ (self, gdbval):
         self.gdbval = gdbval
-        self.tree = Tree(gdbval)
+        self.node = Tree(gdbval)
 
     def to_string (self):
         # like gcc/print-tree.c:print_node_brief
@@ -54,7 +54,7 @@ class TreePrinter:
         if long(self.gdbval) == 0:
             return '<tree 0x0>'
 
-        val_TREE_CODE = self.tree.TREE_CODE()
+        val_TREE_CODE = self.node.TREE_CODE()
 
         # extern const enum tree_code_class tree_code_type[];
         # #define TREE_CODE_CLASS(CODE)	tree_code_type[(int) (CODE)]
@@ -68,7 +68,7 @@ class TreePrinter:
 
         result = '<%s 0x%x' % (val_code_name.string(), long(self.gdbval))
         if long(val_tclass) == 3: # tcc_declaration
-            tree_DECL_NAME = self.tree.DECL_NAME()
+            tree_DECL_NAME = self.node.DECL_NAME()
             if tree_DECL_NAME.is_nonnull():
                  result += ' %s' % tree_DECL_NAME.IDENTIFIER_POINTER()
             else:
@@ -78,11 +78,11 @@ class TreePrinter:
             if tree_TYPE_NAME.is_nonnull():
                 if tree_TYPE_NAME.TREE_CODE() == IDENTIFIER_NODE:
                     result += ' %s' % tree_TYPE_NAME.IDENTIFIER_POINTER()
-                #elif:
-                #   raise foo
-            result += ' (plus extra tcc_type stuff)'
-        if self.tree.TREE_CODE() == IDENTIFIER_NODE:
-            result += ' %s' % self.tree.IDENTIFIER_POINTER()
+                elif tree_TYPE_NAME.TREE_CODE() == TYPE_DECL:
+                    if tree_TYPE_NAME.DECL_NAME().is_nonnull():
+                        result += ' %s' % tree_TYPE_NAME.DECL_NAME().IDENTIFIER_POINTER()
+        if self.node.TREE_CODE() == IDENTIFIER_NODE:
+            result += ' %s' % self.node.IDENTIFIER_POINTER()
         # etc
         result += '>'
         return result
