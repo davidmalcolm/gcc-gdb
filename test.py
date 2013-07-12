@@ -81,6 +81,8 @@ class TreePrinter:
                 #elif:
                 #   raise foo
             result += ' (plus extra tcc_type stuff)'
+        if self.tree.TREE_CODE() == IDENTIFIER_NODE:
+            result += ' %s' % self.tree.IDENTIFIER_POINTER()
         # etc
         result += '>'
         return result
