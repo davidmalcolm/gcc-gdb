@@ -87,14 +87,28 @@ class TreePrinter:
         result += '>'
         return result
 
+class GimplePrinter:
+    def __init__(self, gdbval):
+        self.gdbval = gdbval
+
+    def to_string (self):
+        val_gimple_code = self.gdbval['gsbase']['code']
+        val_gimple_code_name = gdb.parse_and_eval('gimple_code_name')
+        val_code_name = val_gimple_code_name[long(val_gimple_code)]
+        return '<%s 0x%x>' % (val_code_name.string(),
+                              long(self.gdbval))
+
 def pretty_printer_lookup(gdbval):
     type_ = gdbval.type.unqualified()
 
     # "tree" is a "(union tree_node *)"
 
-    #print(type_)
-    if str(type_) in ('union tree_node *', 'tree'):
+    str_type_ = str(type_)
+    if str_type_ in ('union tree_node *', 'tree'):
         return TreePrinter(gdbval)
+
+    if str_type_ in ('union gimple_statement_d *', 'gimple'):
+        return GimplePrinter(gdbval)
 
 """
 During development, I've been manually invoking the code in this way:
