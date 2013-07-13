@@ -87,6 +87,20 @@ class TreePrinter:
         result += '>'
         return result
 
+class CGraphNodePrinter:
+    def __init__(self, gdbval):
+        self.gdbval = gdbval
+
+    def to_string (self):
+        result = '<cgraph_node 0x%x' % long(self.gdbval)
+        # symtab_node_name calls lang_hooks.decl_printable_name
+        # default implementation (lhd_decl_printable_name) is:
+        #    return IDENTIFIER_POINTER (DECL_NAME (decl));
+        tree_decl = Tree(self.gdbval['decl'])
+        result += ' %s' % tree_decl.DECL_NAME().IDENTIFIER_POINTER()
+        result += '>'
+        return result
+
 class GimplePrinter:
     def __init__(self, gdbval):
         self.gdbval = gdbval
@@ -186,6 +200,9 @@ def pretty_printer_lookup(gdbval):
     str_type_ = str(type_)
     if str_type_ in ('union tree_node *', 'tree'):
         return TreePrinter(gdbval)
+
+    if str_type_ in ('struct cgraph_node *', ):
+        return CGraphNodePrinter(gdbval)
 
     if str_type_ in ('union gimple_statement_d *', 'gimple'):
         return GimplePrinter(gdbval)
