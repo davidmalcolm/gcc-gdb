@@ -127,8 +127,53 @@ class CfgEdgePrinter:
         return ('<edge_def 0x%x (%s -> %s)>'
                 % (long(self.gdbval), src, dest))
 
+class Rtx:
+    def __init__(self, gdbval):
+        self.gdbval = gdbval
+
+    def GET_CODE(self):
+        return self.gdbval['code']
+
+def GET_RTX_LENGTH(code):
+    val_rtx_length = gdb.parse_and_eval('rtx_length')
+    return long(val_rtx_length[code])
+
+def GET_RTX_NAME(code):
+    val_rtx_name = gdb.parse_and_eval('rtx_name')
+    return val_rtx_name[code].string()
+
+def GET_RTX_FORMAT(code):
+    val_rtx_format = gdb.parse_and_eval('rtx_format')
+    return val_rtx_format[code].string()
+
+class RtxPrinter:
+    def __init__(self, gdbval):
+        self.gdbval = gdbval
+        self.rtx = Rtx(gdbval)
+
+    def to_string (self):
+        """
+        For now, a cheap kludge: invoke the inferior's print
+        function to get a string to use the user, and return an empty
+        string for gdb
+        """
+        # We use print_inline)rtx to avoid trailing newline
+        gdb.execute('call print_inline_rtx(stderr, %s, 0)'
+                    % long(self.gdbval))
+        return ''
+
+        # or by hand; based on gcc/print-rtl.c:print_rtx
+        result = ('<rtx_def 0x%x'
+                  % (long(self.gdbval)))
+        code = self.rtx.GET_CODE()
+        result += ' (%s' % GET_RTX_NAME(code)
+        format_ = GET_RTX_FORMAT(code)
+        for i in range(GET_RTX_LENGTH(code)):
+            print format_[i]
+        result += ')>'
+        return result
+
 # TODO:
-#   RTL
 #   vec
 #   hashtab
 
@@ -151,6 +196,10 @@ def pretty_printer_lookup(gdbval):
     if str_type_ in ('struct edge_def *', ):
         return CfgEdgePrinter(gdbval)
 
+    if str_type_ in ('struct rtx_def *', ):
+        return RtxPrinter(gdbval)
+
+
 """
 During development, I've been manually invoking the code in this way:
 
@@ -168,6 +217,10 @@ $ PYTHONPATH=$(pwd) gdb \
    --eval-command="python import test" \
    --eval-command="run" \
    --args /usr/libexec/gcc/x86_64-redhat-linux/4.7.2/cc1 -quiet foo.c -quiet -dumpbase foo.c -mtune=generic -march=x86-64 -auxbase foo -o /tmp/ccjOBkfD.s
+
+Other interesting breakpoints:
+   break expand_gimple_stmt
+(for watching gimple become rtl and thus pretty-printing both)
 """
 def register (obj):
     if obj is None:
