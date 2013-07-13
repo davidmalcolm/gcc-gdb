@@ -95,8 +95,43 @@ class GimplePrinter:
         val_gimple_code = self.gdbval['gsbase']['code']
         val_gimple_code_name = gdb.parse_and_eval('gimple_code_name')
         val_code_name = val_gimple_code_name[long(val_gimple_code)]
-        return '<%s 0x%x>' % (val_code_name.string(),
-                              long(self.gdbval))
+        result = '<%s 0x%x' % (val_code_name.string(),
+                               long(self.gdbval))
+        result += '>'
+        return result
+
+def bb_index_to_str(index):
+    if index == 0:
+        return 'ENTRY'
+    elif index == 1:
+        return 'EXIT'
+    else:
+        return '%i' % index
+
+class BasicBlockPrinter:
+    def __init__(self, gdbval):
+        self.gdbval = gdbval
+
+    def to_string (self):
+        return ('<basic_block 0x%x (%s)>'
+                % (long(self.gdbval),
+                   bb_index_to_str(long(self.gdbval['index']))))
+
+class CfgEdgePrinter:
+    def __init__(self, gdbval):
+        self.gdbval = gdbval
+
+    def to_string (self):
+        src = bb_index_to_str(long(self.gdbval['src']['index']))
+        dest = bb_index_to_str(long(self.gdbval['dest']['index']))
+        return ('<edge_def 0x%x (%s -> %s)>'
+                % (long(self.gdbval), src, dest))
+
+# TODO:
+#   RTL
+#   vec
+#   hashtab
+
 
 def pretty_printer_lookup(gdbval):
     type_ = gdbval.type.unqualified()
@@ -109,6 +144,12 @@ def pretty_printer_lookup(gdbval):
 
     if str_type_ in ('union gimple_statement_d *', 'gimple'):
         return GimplePrinter(gdbval)
+
+    if str_type_ in ('struct basic_block_def *', 'basic_block', ):
+        return BasicBlockPrinter(gdbval)
+
+    if str_type_ in ('struct edge_def *', ):
+        return CfgEdgePrinter(gdbval)
 
 """
 During development, I've been manually invoking the code in this way:
