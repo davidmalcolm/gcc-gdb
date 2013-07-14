@@ -93,11 +93,12 @@ class CGraphNodePrinter:
 
     def to_string (self):
         result = '<cgraph_node 0x%x' % long(self.gdbval)
-        # symtab_node_name calls lang_hooks.decl_printable_name
-        # default implementation (lhd_decl_printable_name) is:
-        #    return IDENTIFIER_POINTER (DECL_NAME (decl));
-        tree_decl = Tree(self.gdbval['decl'])
-        result += ' %s' % tree_decl.DECL_NAME().IDENTIFIER_POINTER()
+        if long(self.gdbval):
+            # symtab_node_name calls lang_hooks.decl_printable_name
+            # default implementation (lhd_decl_printable_name) is:
+            #    return IDENTIFIER_POINTER (DECL_NAME (decl));
+            tree_decl = Tree(self.gdbval['decl'])
+            result += ' %s' % tree_decl.DECL_NAME().IDENTIFIER_POINTER()
         result += '>'
         return result
 
@@ -106,6 +107,8 @@ class GimplePrinter:
         self.gdbval = gdbval
 
     def to_string (self):
+        if long(self.gdbval) == 0:
+            return '<gimple 0x0>'
         val_gimple_code = self.gdbval['gsbase']['code']
         val_gimple_code_name = gdb.parse_and_eval('gimple_code_name')
         val_code_name = val_gimple_code_name[long(val_gimple_code)]
@@ -127,19 +130,24 @@ class BasicBlockPrinter:
         self.gdbval = gdbval
 
     def to_string (self):
-        return ('<basic_block 0x%x (%s)>'
-                % (long(self.gdbval),
-                   bb_index_to_str(long(self.gdbval['index']))))
+        result = '<basic_block 0x%x' % long(self.gdbval)
+        if long(self.gdbval):
+            result += ' (%s)' % bb_index_to_str(long(self.gdbval['index']))
+        result += '>'
+        return result
 
 class CfgEdgePrinter:
     def __init__(self, gdbval):
         self.gdbval = gdbval
 
     def to_string (self):
-        src = bb_index_to_str(long(self.gdbval['src']['index']))
-        dest = bb_index_to_str(long(self.gdbval['dest']['index']))
-        return ('<edge_def 0x%x (%s -> %s)>'
-                % (long(self.gdbval), src, dest))
+        result = '<edge_def 0x%x' % long(self.gdbval)
+        if long(self.gdbval):
+            src = bb_index_to_str(long(self.gdbval['src']['index']))
+            dest = bb_index_to_str(long(self.gdbval['dest']['index']))
+            result += ' (%s -> %s)' % (src, dest)
+        result += '>'
+        return result
 
 class Rtx:
     def __init__(self, gdbval):
