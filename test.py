@@ -187,6 +187,17 @@ class RtxPrinter:
         result += ')>'
         return result
 
+class PassPrinter:
+    def __init__(self, gdbval):
+        self.gdbval = gdbval
+
+    def to_string (self):
+        result = '<opt_pass 0x%x' % long(self.gdbval)
+        if long(self.gdbval):
+            result += ' "%s"' % self.gdbval['name'].string()
+        result += '>'
+        return result
+
 # TODO:
 #   vec
 #   hashtab
@@ -215,6 +226,9 @@ def pretty_printer_lookup(gdbval):
 
     if str_type_ in ('struct rtx_def *', ):
         return RtxPrinter(gdbval)
+
+    if str_type_ in ('struct opt_pass *', ):
+        return PassPrinter(gdbval)
 
 
 """
