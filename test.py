@@ -209,9 +209,10 @@ class PassPrinter:
         return result
 
 # TODO:
-#   vec
-#   hashtab
-
+#   * vec
+#   * hashtab
+#   * remove hardcoded values for enums
+#   * rename
 
 def pretty_printer_lookup(gdbval):
     type_ = gdbval.type.unqualified()
