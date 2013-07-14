@@ -194,7 +194,9 @@ class PassPrinter:
     def to_string (self):
         result = '<opt_pass 0x%x' % long(self.gdbval)
         if long(self.gdbval):
-            result += ' "%s"' % self.gdbval['name'].string()
+            result += (' "%s"(%i)'
+                       % (self.gdbval['name'].string(),
+                          long(self.gdbval['static_pass_number'])))
         result += '>'
         return result
 
